@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AI Momentum Pro v2.2</title>
+    <title>AI Momentum Pro v2.3</title>
     <style>
         * {
             margin: 0;
@@ -75,10 +75,6 @@
 
         .status-disconnected {
             background: #ff0000;
-        }
-
-        .status-connecting {
-            background: #ffaa00;
         }
 
         @keyframes pulse {
@@ -197,6 +193,16 @@
 
         .signal-neutral {
             color: #ffaa00;
+        }
+
+        .accuracy-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            background: rgba(0, 242, 96, 0.2);
+            border: 1px solid #00f260;
+            border-radius: 12px;
+            font-size: 11px;
+            margin-left: 10px;
         }
 
         .mtf-analysis {
@@ -451,24 +457,19 @@
             box-shadow: 0 8px 32px rgba(0,0,0,0.5);
             z-index: 1000;
             display: none;
-            animation: slideDown 0.5s;
+            opacity: 0;
+            transition: opacity 0.3s ease;
             max-width: 90%;
             font-size: 14px;
         }
 
-        .alert-box.error {
-            background: linear-gradient(45deg, #ff0055, #cc0044);
+        .alert-box.show {
+            display: block;
+            opacity: 1;
         }
 
-        @keyframes slideDown {
-            from {
-                transform: translateX(-50%) translateY(-100px);
-                opacity: 0;
-            }
-            to {
-                transform: translateX(-50%) translateY(0);
-                opacity: 1;
-            }
+        .alert-box.error {
+            background: linear-gradient(45deg, #ff0055, #cc0044);
         }
 
         .loading-overlay {
@@ -721,11 +722,6 @@
             font-size: 13px;
             opacity: 0.8;
         }
-
-        /* Performance optimizations - invisible to user */
-        .signal-card, .chart-section, .controls {
-            will-change: auto;
-        }
     </style>
 </head>
 <body>
@@ -748,8 +744,8 @@
         <!-- Dashboard Page -->
         <div class="page active" id="dashboardPage">
             <div class="header">
-                <h1>🤖 AI Momentum Pro v2.2</h1>
-                <p>Multi-Timeframe • Order Blocks • Real-Time Analysis</p>
+                <h1>🤖 AI Momentum Pro v2.3</h1>
+                <p>Enhanced Accuracy • Multi-Timeframe • Order Blocks</p>
             </div>
 
             <div class="status-bar">
@@ -764,16 +760,16 @@
                 <div class="control-group">
                     <label>📊 Market Symbol</label>
                     <select id="marketSelect" onchange="changeMarket()">
-                        <option value="R_100">Volatility 100 Index ⚡</option>
+                        <option value="1HZ25V">Volatility 25 (1s) Index ⚡</option>
+                        <option value="1HZ100V">Volatility 100 (1s) Index</option>
+                        <option value="1HZ75V">Volatility 75 (1s) Index</option>
+                        <option value="1HZ50V">Volatility 50 (1s) Index</option>
+                        <option value="1HZ10V">Volatility 10 (1s) Index</option>
+                        <option value="R_100">Volatility 100 Index</option>
                         <option value="R_75">Volatility 75 Index</option>
                         <option value="R_50">Volatility 50 Index</option>
                         <option value="R_25">Volatility 25 Index</option>
                         <option value="R_10">Volatility 10 Index</option>
-                        <option value="1HZ100V">Volatility 100 (1s) Index</option>
-                        <option value="1HZ75V">Volatility 75 (1s) Index</option>
-                        <option value="1HZ50V">Volatility 50 (1s) Index</option>
-                        <option value="1HZ25V">Volatility 25 (1s) Index</option>
-                        <option value="1HZ10V">Volatility 10 (1s) Index</option>
                         <option value="frxEURUSD">EUR/USD</option>
                         <option value="frxGBPUSD">GBP/USD</option>
                         <option value="frxUSDJPY">USD/JPY</option>
@@ -782,8 +778,8 @@
                 </div>
 
                 <div class="control-group">
-                    <label>⚙️ Signal Threshold: <span id="thresholdValue">70%</span></label>
-                    <input type="range" id="thresholdSlider" min="50" max="90" value="70" 
+                    <label>⚙️ Signal Threshold: <span id="thresholdValue">75%</span></label>
+                    <input type="range" id="thresholdSlider" min="50" max="90" value="75" 
                            oninput="document.getElementById('thresholdValue').innerText = this.value + '%'">
                 </div>
 
@@ -836,7 +832,10 @@
 
             <div class="signal-card">
                 <div class="signal-header">
-                    <div class="signal-type" id="signalType">⏳ ANALYZING</div>
+                    <div>
+                        <div class="signal-type" id="signalType">⏳ ANALYZING</div>
+                        <span class="accuracy-badge" id="accuracyBadge">Enhanced Accuracy</span>
+                    </div>
                     <div style="font-size: 12px;" id="signalTime">--:--:--</div>
                 </div>
 
@@ -950,7 +949,7 @@
                             <div class="indicator-value">--</div>
                         </div>
                         <div class="indicator-item">
-                            <div class="indicator-label">EMA 20</div>
+                            <div class="indicator-label">Trend Strength</div>
                             <div class="indicator-value">--</div>
                         </div>
                     </div>
@@ -1007,7 +1006,7 @@
         </div>
 
         <div class="footer">
-            AI Momentum Pro v2.2 | Multi-Timeframe with Sound Alerts & History
+            AI Momentum Pro v2.3 | Enhanced Accuracy Algorithm
             <br>For Educational Purposes Only
         </div>
     </div>
@@ -1026,20 +1025,19 @@
 
     <div class="alert-box" id="alertBox"></div>
 
-    <!-- Lightweight Charts Library -->
     <script src="https://unpkg.com/lightweight-charts@4.1.0/dist/lightweight-charts.standalone.production.js"></script>
     
     <script>
         // ========================================
-        // CONFIGURATION
+        // CONFIGURATION - UPDATED DEFAULT
         // ========================================
         const CONFIG = {
             APP_ID: 1089,
             WS_URL: 'wss://ws.derivws.com/websockets/v3?app_id=1089',
-            DEFAULT_SYMBOL: 'R_100',
+            DEFAULT_SYMBOL: '1HZ25V', // ✅ Changed to Volatility 25 (1s)
             DEFAULT_TIMEFRAME: 900,
             HISTORY_SIZE: 300,
-            UPDATE_INTERVAL: 3000, // Optimized: Less frequent updates
+            UPDATE_INTERVAL: 3000,
             MAX_RETRIES: 3,
             RETRY_DELAY: 2000,
             TIMEFRAMES: {
@@ -1077,9 +1075,7 @@
         let connectionRetries = 0;
         let connectionLogs = [];
         let chartInitialized = false;
-
-        // Performance optimization: Debounce helper
-        let updateTimer = null;
+        let alertTimeout = null; // ✅ For alert management
 
         // ========================================
         // CONNECTION LOGGING
@@ -1098,7 +1094,43 @@
         }
 
         // ========================================
-        // CHART INITIALIZATION (FIXED)
+        // IMPROVED ALERT FUNCTION (FIXED)
+        // ========================================
+        function showAlert(message, isError = false) {
+            const alertBox = document.getElementById('alertBox');
+            
+            // Clear any existing timeout
+            if (alertTimeout) {
+                clearTimeout(alertTimeout);
+            }
+            
+            // Set message and styling
+            alertBox.textContent = message;
+            alertBox.className = 'alert-box' + (isError ? ' error' : '');
+            
+            // Show with animation
+            alertBox.classList.add('show');
+            
+            // Browser notification
+            if ("Notification" in window && Notification.permission === "granted") {
+                new Notification("AI Momentum Pro", {
+                    body: message,
+                    icon: "📊",
+                    badge: "🤖"
+                });
+            }
+
+            // Auto-hide after 4 seconds
+            alertTimeout = setTimeout(() => {
+                alertBox.classList.remove('show');
+                setTimeout(() => {
+                    alertBox.style.display = 'none';
+                }, 300); // Wait for fade out animation
+            }, 4000);
+        }
+
+        // ========================================
+        // CHART INITIALIZATION
         // ========================================
         function initChart() {
             try {
@@ -1146,10 +1178,8 @@
                     wickDownColor: '#ff0055',
                 });
 
-                // Hide loading indicator
                 document.getElementById('chartLoading').style.display = 'none';
                 
-                // Optimized resize handler
                 let resizeTimeout;
                 window.addEventListener('resize', () => {
                     clearTimeout(resizeTimeout);
@@ -1169,18 +1199,14 @@
             } catch (error) {
                 addLog(`❌ Chart error: ${error.message}`, 'error');
                 document.getElementById('chartLoading').innerHTML = 
-                    '<div style="font-size: 13px; color: #ff0055;">⚠️ Chart initialization failed<br><span style="font-size: 11px;">Refresh page to retry</span></div>';
+                    '<div style="font-size: 13px; color: #ff0055;">⚠️ Chart initialization failed</div>';
                 return false;
             }
         }
 
-        // ========================================
-        // OPTIMIZED CHART UPDATE
-        // ========================================
         function updateChart() {
             if (!candlestickSeries || !priceData[currentTimeframe] || !chartInitialized) return;
 
-            // Performance: Use requestAnimationFrame for smooth updates
             requestAnimationFrame(() => {
                 try {
                     const chartData = priceData[currentTimeframe].map(c => ({
@@ -1201,7 +1227,7 @@
         }
 
         // ========================================
-        // TECHNICAL INDICATORS (Full Implementation)
+        // TECHNICAL INDICATORS (Complete Set)
         // ========================================
         function SMA(data, period) {
             if (data.length < period) return null;
@@ -1354,7 +1380,41 @@
         }
 
         // ========================================
-        // ORDER BLOCK DETECTION
+        // RSI DIVERGENCE DETECTION (NEW)
+        // ========================================
+        function detectRSIDivergence(prices, rsiValues, lookback = 20) {
+            if (prices.length < lookback || rsiValues.length < lookback) return { type: 'none', strength: 0 };
+            
+            const recentPrices = prices.slice(-lookback);
+            const recentRSI = rsiValues.slice(-lookback);
+            
+            // Find recent highs and lows
+            const priceHigh = Math.max(...recentPrices);
+            const priceLow = Math.min(...recentPrices);
+            const rsiHigh = Math.max(...recentRSI);
+            const rsiLow = Math.min(...recentRSI);
+            
+            const currentPrice = recentPrices[recentPrices.length - 1];
+            const currentRSI = recentRSI[recentRSI.length - 1];
+            
+            // Bullish divergence: Price makes lower low, RSI makes higher low
+            const priceTrend = (currentPrice - priceLow) / priceLow * 100;
+            const rsiTrend = (currentRSI - rsiLow) / rsiLow * 100;
+            
+            if (priceTrend < -2 && rsiTrend > 5) {
+                return { type: 'bullish', strength: Math.min(rsiTrend, 20) };
+            }
+            
+            // Bearish divergence: Price makes higher high, RSI makes lower high
+            if (priceTrend > 2 && rsiTrend < -5) {
+                return { type: 'bearish', strength: Math.min(Math.abs(rsiTrend), 20) };
+            }
+            
+            return { type: 'none', strength: 0 };
+        }
+
+        // ========================================
+        // ENHANCED ORDER BLOCK DETECTION
         // ========================================
         function detectOrderBlocks(candles, lookback = 50) {
             if (candles.length < lookback) return [];
@@ -1362,49 +1422,77 @@
             const orderBlocks = [];
             const recentCandles = candles.slice(-lookback);
             
-            for (let i = 3; i < recentCandles.length - 3; i++) {
+            for (let i = 5; i < recentCandles.length - 5; i++) {
                 const current = recentCandles[i];
-                const next1 = recentCandles[i + 1];
-                const next2 = recentCandles[i + 2];
+                const prev = recentCandles[i - 1];
+                const next = recentCandles[i + 1];
+                
+                const bodySize = Math.abs(current.close - current.open);
+                const candleRange = current.high - current.low;
+                const bodyRatio = bodySize / candleRange;
                 
                 // Bullish Order Block
                 const isBullishOB = 
-                    current.close > current.open &&
-                    (current.close - current.open) > (current.high - current.low) * 0.6 &&
-                    next1.close > current.high &&
-                    next2.close > next1.close;
+                    current.close > current.open && // Bullish candle
+                    bodyRatio > 0.65 && // Strong body
+                    bodySize > candleRange * 0.6 && // Significant move
+                    next.close > current.high && // Price broke above
+                    recentCandles[i + 2].close > next.close && // Continued
+                    recentCandles[i + 3].close > recentCandles[i + 2].close; // Sustained
                 
                 if (isBullishOB) {
-                    const strength = ((current.close - current.open) / current.open) * 100;
+                    const strength = (bodySize / current.open) * 100;
+                    const volume = Math.abs(current.close - current.open); // Synthetic volume
+                    
                     orderBlocks.push({
                         type: 'bullish',
                         high: current.high,
                         low: current.low,
                         time: current.time,
-                        strength: strength
+                        strength: strength,
+                        volume: volume,
+                        tested: false
                     });
                 }
                 
                 // Bearish Order Block
                 const isBearishOB = 
                     current.close < current.open &&
-                    (current.open - current.close) > (current.high - current.low) * 0.6 &&
-                    next1.close < current.low &&
-                    next2.close < next1.close;
+                    bodyRatio > 0.65 &&
+                    bodySize > candleRange * 0.6 &&
+                    next.close < current.low &&
+                    recentCandles[i + 2].close < next.close &&
+                    recentCandles[i + 3].close < recentCandles[i + 2].close;
                 
                 if (isBearishOB) {
-                    const strength = ((current.open - current.close) / current.open) * 100;
+                    const strength = (bodySize / current.open) * 100;
+                    const volume = Math.abs(current.open - current.close);
+                    
                     orderBlocks.push({
                         type: 'bearish',
                         high: current.high,
                         low: current.low,
                         time: current.time,
-                        strength: strength
+                        strength: strength,
+                        volume: volume,
+                        tested: false
                     });
                 }
             }
             
-            return orderBlocks.slice(-5);
+            // Filter overlapping blocks
+            const filteredOBs = [];
+            for (const ob of orderBlocks) {
+                const hasOverlap = filteredOBs.some(existing => 
+                    Math.abs(ob.low - existing.low) < (ob.high - ob.low) * 0.3
+                );
+                
+                if (!hasOverlap || ob.strength > 1.5) {
+                    filteredOBs.push(ob);
+                }
+            }
+            
+            return filteredOBs.slice(-5).sort((a, b) => b.strength - a.strength);
         }
 
         // ========================================
@@ -1439,7 +1527,7 @@
             else score -= 20;
 
             if (adx > 25) {
-                score *= 1.2;
+                score *= 1.3;
             }
 
             const strength = Math.abs(score);
@@ -1461,7 +1549,7 @@
         }
 
         // ========================================
-        // AI MOMENTUM SCORING
+        // ENHANCED AI MOMENTUM SCORING (IMPROVED ACCURACY)
         // ========================================
         function calculateAIMomentumScore(candles) {
             if (candles.length < 100) {
@@ -1482,13 +1570,7 @@
             const lows = candles.map(c => c.low);
             const currentPrice = closes[closes.length - 1];
 
-            const orderBlocks = detectOrderBlocks(candles);
-            const mtfResults = multiTimeframeAnalysis();
-            
-            let mtfBuyVotes = mtfResults.filter(r => r.signal === 'BUY').length;
-            let mtfSellVotes = mtfResults.filter(r => r.signal === 'SELL').length;
-            let mtfScore = (mtfBuyVotes - mtfSellVotes) * 10;
-
+            // Calculate all indicators
             const rsi = RSI(closes, 14) || 50;
             const macd = MACD(closes) || { macd: 0, histogram: 0 };
             const stoch = Stochastic(highs, lows, closes, 14) || 50;
@@ -1500,71 +1582,167 @@
             const ema20 = EMA(closes, 20);
             const ema50 = EMA(closes, 50);
             const ema100 = EMA(closes, 100);
+            const ema200 = EMA(closes, 200);
+
+            // Advanced features
+            const orderBlocks = detectOrderBlocks(candles);
+            const mtfResults = multiTimeframeAnalysis();
+            
+            // RSI values for divergence
+            let rsiValues = [];
+            for (let i = 14; i < closes.length; i++) {
+                rsiValues.push(RSI(closes.slice(0, i + 1), 14) || 50);
+            }
+            const divergence = detectRSIDivergence(closes.slice(-20), rsiValues.slice(-20));
+
+            // Multi-timeframe consensus
+            let mtfBuyVotes = mtfResults.filter(r => r.signal === 'BUY').length;
+            let mtfSellVotes = mtfResults.filter(r => r.signal === 'SELL').length;
+            let mtfScore = (mtfBuyVotes - mtfSellVotes) * 8;
 
             const atrPercent = (atr / currentPrice) * 100;
             const bbSqueeze = bb ? bb.bandwidth : 0;
 
+            // ========================================
+            // ENHANCED SCORING SYSTEM (Better Accuracy)
+            // ========================================
             let buyScore = 0;
             let sellScore = 0;
-            const maxScore = 100;
+            const maxScore = 120; // Increased for more granularity
 
-            // Trend (20 points)
-            if (ema20 && ema50 && ema100) {
-                if (ema20 > ema50 && ema50 > ema100) buyScore += 20;
-                else if (ema20 < ema50 && ema50 < ema100) sellScore += 20;
+            // 1. TREND ALIGNMENT (25 points) - Strong weight
+            if (ema20 && ema50 && ema100 && ema200) {
+                const trendAlignment = 
+                    (ema20 > ema50 ? 1 : -1) +
+                    (ema50 > ema100 ? 1 : -1) +
+                    (ema100 > ema200 ? 1 : -1);
+                
+                if (trendAlignment === 3) buyScore += 25;
+                else if (trendAlignment === -3) sellScore += 25;
+                else if (trendAlignment > 0) buyScore += 12;
+                else sellScore += 12;
             }
 
-            // Momentum (15 points)
-            if (rsi < 30) buyScore += 15;
-            else if (rsi > 70) sellScore += 15;
-
-            // MACD (15 points)
-            if (macd.histogram > 0) buyScore += 15;
-            else sellScore += 15;
-
-            // ADX strength (10 points)
-            if (adx > 25) {
-                if (ema20 > ema50) buyScore += 10;
-                else sellScore += 10;
+            // 2. RSI WITH LEVELS (20 points)
+            if (rsi < 25) buyScore += 20; // Oversold
+            else if (rsi < 35) buyScore += 15;
+            else if (rsi > 75) sellScore += 20; // Overbought
+            else if (rsi > 65) sellScore += 15;
+            else if (rsi >= 45 && rsi <= 55) {
+                // Neutral zone
+                buyScore += 5;
+                sellScore += 5;
             }
 
-            // Volatility (10 points)
-            if (atrPercent > 1.5 && atrPercent < 4) {
-                if (roc12 > 0) buyScore += 10;
-                else sellScore += 10;
+            // 3. MACD MOMENTUM (18 points)
+            if (macd.histogram > 0) {
+                const strength = Math.min(macd.histogram * 1000, 18);
+                buyScore += strength;
+            } else {
+                const strength = Math.min(Math.abs(macd.histogram) * 1000, 18);
+                sellScore += strength;
             }
 
-            // Multi-Timeframe (15 points)
-            if (mtfScore > 20) buyScore += 15;
-            else if (mtfScore < -20) sellScore += 15;
+            // 4. STOCHASTIC CONFIRMATION (12 points)
+            if (stoch < 20) buyScore += 12;
+            else if (stoch > 80) sellScore += 12;
 
-            // Order Blocks (15 points)
+            // 5. ADX TREND STRENGTH (15 points)
+            if (adx > 30) {
+                // Strong trend
+                if (ema20 > ema50) buyScore += 15;
+                else sellScore += 15;
+            } else if (adx > 20) {
+                if (ema20 > ema50) buyScore += 8;
+                else sellScore += 8;
+            }
+
+            // 6. VOLATILITY FILTER (10 points)
+            if (atrPercent > 1.0 && atrPercent < 5.0) {
+                // Good volatility range
+                if (roc12 > 0.5) buyScore += 10;
+                else if (roc12 < -0.5) sellScore += 10;
+            }
+
+            // 7. BOLLINGER BANDS (10 points)
+            if (bb) {
+                const pricePosition = (currentPrice - bb.lower) / (bb.upper - bb.lower);
+                if (pricePosition < 0.2) buyScore += 10; // Near lower band
+                else if (pricePosition > 0.8) sellScore += 10; // Near upper band
+            }
+
+            // 8. MULTI-TIMEFRAME CONSENSUS (20 points) - Increased weight
+            if (mtfBuyVotes >= 4) buyScore += 20;
+            else if (mtfSellVotes >= 4) sellScore += 20;
+            else if (mtfBuyVotes >= 3) buyScore += 12;
+            else if (mtfSellVotes >= 3) sellScore += 12;
+
+            // 9. ORDER BLOCKS (20 points) - High importance
+            let obScore = 0;
             for (const ob of orderBlocks) {
                 const obMidpoint = (ob.high + ob.low) / 2;
                 const distance = Math.abs(currentPrice - obMidpoint) / currentPrice * 100;
                 
-                if (distance < 0.5) {
-                    if (ob.type === 'bullish') buyScore += 15;
-                    else sellScore += 15;
+                if (distance < 0.3) { // Very close
+                    if (ob.type === 'bullish') obScore += 20;
+                    else obScore -= 20;
                     break;
+                } else if (distance < 0.7) { // Nearby
+                    if (ob.type === 'bullish') obScore += 10;
+                    else obScore -= 10;
                 }
             }
+            
+            if (obScore > 0) buyScore += obScore;
+            else sellScore += Math.abs(obScore);
 
+            // 10. RSI DIVERGENCE (15 points) - NEW
+            if (divergence.type === 'bullish') {
+                buyScore += divergence.strength;
+            } else if (divergence.type === 'bearish') {
+                sellScore += divergence.strength;
+            }
+
+            // ========================================
+            // CALCULATE PROBABILITIES
+            // ========================================
             const totalScore = buyScore + sellScore;
-            const buyProb = totalScore > 0 ? (buyScore / maxScore) * 100 : 0;
-            const sellProb = totalScore > 0 ? (sellScore / maxScore) * 100 : 0;
+            let buyProb = totalScore > 0 ? (buyScore / maxScore) * 100 : 0;
+            let sellProb = totalScore > 0 ? (sellScore / maxScore) * 100 : 0;
+            
+            // Normalize to ensure total doesn't exceed 100%
+            const total = buyProb + sellProb;
+            if (total > 100) {
+                buyProb = (buyProb / total) * 100;
+                sellProb = (sellProb / total) * 100;
+            }
+            
             const neutralProb = Math.max(0, 100 - buyProb - sellProb);
 
+            // ========================================
+            // SIGNAL DETERMINATION WITH FILTERS
+            // ========================================
             const threshold = parseFloat(document.getElementById('thresholdSlider').value);
             let signal = 'NEUTRAL';
             let confidence = Math.max(buyProb, sellProb);
 
+            // Additional filters to reduce false signals
+            const trendStrength = adx > 25;
+            const volatilityOk = atrPercent > 0.5 && atrPercent < 6;
+            const mtfAlignment = Math.abs(mtfBuyVotes - mtfSellVotes) >= 2;
+
             if (buyProb > threshold && buyProb > sellProb) {
-                signal = 'BUY';
-                confidence = buyProb;
+                // Additional confirmation for BUY
+                if (trendStrength || mtfAlignment || buyProb > 80) {
+                    signal = 'BUY';
+                    confidence = buyProb;
+                }
             } else if (sellProb > threshold && sellProb > buyProb) {
-                signal = 'SELL';
-                confidence = sellProb;
+                // Additional confirmation for SELL
+                if (trendStrength || mtfAlignment || sellProb > 80) {
+                    signal = 'SELL';
+                    confidence = sellProb;
+                }
             }
 
             return {
@@ -1581,8 +1759,7 @@
                     atr: atrPercent.toFixed(2),
                     bbWidth: bbSqueeze.toFixed(2),
                     roc: roc12.toFixed(2),
-                    ema20: ema20?.toFixed(2),
-                    ema50: ema50?.toFixed(2)
+                    trendStrength: trendStrength ? 'STRONG' : 'WEAK'
                 },
                 orderBlocks: orderBlocks,
                 mtfAnalysis: mtfResults
@@ -1590,12 +1767,10 @@
         }
 
         // ========================================
-        // OPTIMIZED UI UPDATE
+        // UI UPDATE FUNCTIONS (Continued in next part due to length)
         // ========================================
         function updateUI(analysis) {
-            // Performance: Batch DOM updates
             requestAnimationFrame(() => {
-                // Update probabilities
                 document.getElementById('probUpValue').textContent = analysis.buyProb + '%';
                 document.getElementById('probDownValue').textContent = analysis.sellProb + '%';
                 document.getElementById('probNeutralValue').textContent = analysis.neutralProb + '%';
@@ -1637,13 +1812,8 @@
                 document.getElementById('signalTime').textContent = now.toLocaleTimeString();
                 document.getElementById('lastUpdate').textContent = now.toLocaleTimeString();
 
-                // Update MTF
                 updateMTFDisplay(analysis.mtfAnalysis);
-
-                // Update Order Blocks
                 updateOrderBlocksDisplay(analysis.orderBlocks);
-
-                // Update Indicators
                 updateIndicatorsDisplay(analysis.indicators);
             });
         }
@@ -1729,8 +1899,8 @@
                     <div class="indicator-value" style="color: ${indicators.roc > 0 ? '#00ff88' : '#ff0055'}">${indicators.roc}%</div>
                 </div>
                 <div class="indicator-item">
-                    <div class="indicator-label">EMA 20</div>
-                    <div class="indicator-value">${indicators.ema20}</div>
+                    <div class="indicator-label">Trend Strength</div>
+                    <div class="indicator-value" style="color: ${indicators.trendStrength === 'STRONG' ? '#00ff88' : '#ffaa00'}">${indicators.trendStrength}</div>
                 </div>
             `;
             document.getElementById('indicatorsGrid').innerHTML = indicatorsHTML;
@@ -2007,7 +2177,7 @@
 
                     setTimeout(() => {
                         document.getElementById('loadingOverlay').style.display = 'none';
-                        showAlert('✅ Connected to Deriv API successfully!');
+                        showAlert('✅ Connected successfully!'); // ✅ Will auto-hide after 4 seconds
                     }, 2000);
                 };
 
@@ -2089,7 +2259,7 @@
 
         function skipConnection() {
             document.getElementById('loadingOverlay').style.display = 'none';
-            showAlert('⚠️ Running in Demo Mode (No live data)', true);
+            showAlert('⚠️ Running in Demo Mode', true);
             document.getElementById('connectionText').textContent = 'Demo Mode';
             document.getElementById('connectBtn').style.display = 'block';
             generateDemoData();
@@ -2104,7 +2274,7 @@
         }
 
         function generateDemoData() {
-            const basePrice = 640000;
+            const basePrice = 3.50; // Volatility 25 (1s) typical price
             const now = Math.floor(Date.now() / 1000);
             
             for (const tf of Object.keys(CONFIG.TIMEFRAMES)) {
@@ -2113,11 +2283,11 @@
                 
                 for (let i = 200; i > 0; i--) {
                     const time = now - (i * timeframe);
-                    const variance = Math.random() * 1000 - 500;
+                    const variance = (Math.random() - 0.5) * 0.05;
                     const open = basePrice + variance;
-                    const close = open + (Math.random() * 200 - 100);
-                    const high = Math.max(open, close) + Math.random() * 50;
-                    const low = Math.min(open, close) - Math.random() * 50;
+                    const close = open + (Math.random() - 0.5) * 0.03;
+                    const high = Math.max(open, close) + Math.random() * 0.01;
+                    const low = Math.min(open, close) - Math.random() * 0.01;
                     
                     priceData[timeframe].push({
                         time: time,
@@ -2134,7 +2304,7 @@
             setInterval(() => {
                 const time = Math.floor(Date.now() / 1000);
                 const lastPrice = priceData[60][priceData[60].length - 1].close;
-                const newPrice = lastPrice + (Math.random() * 20 - 10);
+                const newPrice = lastPrice + (Math.random() - 0.5) * 0.01;
                 
                 handleTickUpdate({
                     epoch: time,
@@ -2303,49 +2473,25 @@
             }
         }
 
-        function showAlert(message, isError = false) {
-            const alertBox = document.getElementById('alertBox');
-            alertBox.textContent = message;
-            alertBox.className = 'alert-box' + (isError ? ' error' : '');
-            alertBox.style.display = 'block';
-
-            if ("Notification" in window && Notification.permission === "granted") {
-                new Notification("AI Momentum Pro", {
-                    body: message,
-                    icon: "📊",
-                    badge: "🤖"
-                });
-            }
-
-            setTimeout(() => {
-                alertBox.style.display = 'none';
-            }, 6000);
-        }
-
         // ========================================
         // INITIALIZATION
         // ========================================
         window.addEventListener('load', () => {
-            addLog('🚀 AI Momentum Pro v2.2 Loading...', 'info');
+            addLog('🚀 AI Momentum Pro v2.3 Loading...', 'info');
             
-            // Initialize audio
             initAudio();
             
-            // Load saved preferences
             const savedSound = localStorage.getItem('soundEnabled');
             if (savedSound !== null) {
                 soundEnabled = savedSound === 'true';
                 document.getElementById('soundToggle').checked = soundEnabled;
             }
             
-            // Load history
             loadHistory();
             
-            // Initialize chart
             const chartReady = initChart();
             
             if (chartReady) {
-                // Auto-connect after 1 second
                 setTimeout(() => {
                     connectToMarket();
                 }, 1000);
